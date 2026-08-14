@@ -1,0 +1,35 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="bl-title">
+    <title id="bl-title">blemish logo: an issue tree whose one flawed leaf is marked, each node carrying its full path</title>
+
+    <defs>
+        <linearGradient id="bl-tile" x1="24" y1="24" x2="232" y2="232" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#5B7CFA" />
+            <stop offset="1" stop-color="#8B5CF6" />
+        </linearGradient>
+        <linearGradient id="bl-flaw" x1="150" y1="150" x2="200" y2="200" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#FB7185" />
+            <stop offset="1" stop-color="#F43F5E" />
+        </linearGradient>
+    </defs>
+
+    <rect x="24" y="24" width="208" height="208" rx="48" fill="url(#bl-tile)" />
+
+    <!-- edges: root -> two branches -> leaves; the spine every path is built from -->
+    <g stroke="#FFFFFF" stroke-opacity="0.85" stroke-width="8" stroke-linecap="round">
+        <path d="M128 76 L84 128" />
+        <path d="M128 76 L172 128" />
+        <path d="M84 128 L64 180" />
+        <path d="M172 128 L192 180" />
+    </g>
+
+    <!-- clean nodes -->
+    <g fill="#FFFFFF">
+        <circle cx="128" cy="76" r="16" />
+        <circle cx="84" cy="128" r="13" />
+        <circle cx="172" cy="128" r="13" />
+        <circle cx="64" cy="180" r="11" />
+    </g>
+
+    <!-- the blemish: one leaf that failed -->
+    <circle cx="192" cy="180" r="17" fill="url(#bl-flaw)" stroke="#FFFFFF" stroke-width="5" />
+</svg>
