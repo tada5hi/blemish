@@ -13,7 +13,7 @@ export default defineConfig({
             //
             // Note this measures only the RUNTIME surface. A large share of
             // what this package is lives in the type system, which coverage
-            // cannot see — `npm run test:types` is the other half.
+            // cannot see — `npm run build:types` is the other half.
             thresholds: {
                 branches: 100,
                 functions: 100,

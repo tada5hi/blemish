@@ -82,7 +82,7 @@ Writing `ResolveIssueCode<C>` inline at each use — which is how this type was 
 - Branch *selection* keeps working, so `defineIssueItem` still rejects a bad payload. The gatekeep — the half anyone would think to test — was never broken.
 - `never` is assignable to everything, so no call site complains, no runtime test changes, and downstream code that should have been type-checked against a concrete variant simply is not.
 
-It surfaced here only because `tsconfig.json` includes `test/**/*` and `npm run test:types` runs — the same specs had been green in `validup` for as long as they existed, because `validup` typechecks only `src`. `test/unit/define.spec.ts` now pins it with an explicit `IsNever<T> = [T] extends [never] ? true : false` assertion per branch, verified non-vacuous by reverting the fix and watching nine errors appear.
+It surfaced here only because `tsconfig.json` includes `test/**/*` and `npm run build:types` runs — the same specs had been green in `validup` for as long as they existed, because `validup` typechecks only `src`. `test/unit/define.spec.ts` now pins it with an explicit `IsNever<T> = [T] extends [never] ? true : false` assertion per branch, verified non-vacuous by reverting the fix and watching nine errors appear.
 
 **Generalise it:** a conditional type whose branches are `Extract`s can degenerate to `never` without any symptom a runtime test or a negative type test can see. When a type-level helper is load-bearing, assert what it resolves *to*, not only what it rejects.
 

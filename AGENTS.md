@@ -20,22 +20,25 @@ Both deviate from the sibling-package template (`twinop` / `pathtrace` / `smob` 
 npm install
 
 # Development
-npm run build           # tsdown → dist/index.mjs + dist/index.d.mts
+npm run build           # build:types then build:js
+npm run build:types     # tsc --noEmit over src AND test — see below
+npm run build:js        # tsdown → dist/index.mjs + dist/index.d.mts
 npm run test            # vitest
 npm run test:coverage   # vitest + v8 coverage
-npm run test:types      # tsc --noEmit over src AND test — see below
 npm run lint            # eslint
 npm run lint:fix
 ```
 
 - **Node.js**: no declared floor (CI runs 24)
 - **Package manager**: `npm`
-- **Build**: `tsdown` → ESM-only (`dist/index.mjs` + `dist/index.d.mts`), no CJS
+- **Build**: `tsc --noEmit` typechecks, then `tsdown` emits ESM-only (`dist/index.mjs` + `dist/index.d.mts`), no CJS
 - **Test runner**: Vitest 4, v8 coverage, thresholds at 100 across the board
 - **Lint**: ESLint v10 flat config, `@tada5hi/eslint-config`
 - **Release**: release-please (single package at the repo root) → `tada5hi/monoship`
 
-**`npm run test:types` is not optional ceremony.** `tsconfig.json` includes `test/**/*` specifically so the `@ts-expect-error` and `IsNever` cases in `test/unit/define.spec.ts` are actually evaluated. `tsconfig.build.json` (src only) is what `tsdown` emits from, so specs can never influence the published `.d.mts`. Run all three of `test`, `test:types` and `lint` before calling work done — the runtime suite alone cannot see a type-level regression, and the package's most subtle bug to date was exactly that (see [architecture.md](.agents/architecture.md#the-never-collapse)).
+**The typecheck half of `build` is load-bearing, not a formality.** `build:types` runs against `tsconfig.json`, which includes `test/**/*` specifically so the `@ts-expect-error` and `IsNever` cases in `test/unit/define.spec.ts` are actually evaluated. `tsdown` emits from `tsconfig.build.json` (src only), so specs can never influence the published `.d.mts`.
+
+This is why the typecheck sits in `build` rather than in a separate command: a type-level regression here is invisible to `npm run test`, and the package's most subtle bug to date was exactly that (see [architecture.md](.agents/architecture.md#the-never-collapse)). Wiring it into `build` means CI catches it without a dedicated job, and a broken spec blocks the build — deliberate in a package this small, where the specs are cheap and currently clean. Run `build`, `test` and `lint` before calling work done.
 
 ## Detailed Guides
 

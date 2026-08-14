@@ -12,8 +12,8 @@ Both are easy to undo by accident during a dependency bump or a template sync. I
 
 | Tool                       | Purpose                                                        |
 |----------------------------|----------------------------------------------------------------|
-| `tsdown`                   | Build — ESM bundle + `.d.mts` from `src/index.ts`               |
-| `tsc --noEmit`             | Typecheck, incl. the specs (`npm run test:types`)               |
+| `tsc --noEmit`             | `build:types` — typecheck `src` **and** `test`                  |
+| `tsdown`                   | `build:js` — ESM bundle + `.d.mts` from `src/index.ts`          |
 | `vitest` + `@vitest/coverage-v8` | Test runner and coverage                                 |
 | `eslint` (v10 flat config) | Lint, via `@tada5hi/eslint-config`                              |
 | `commitlint`               | Conventional Commits, via `@tada5hi/commitlint-config`          |
@@ -24,7 +24,7 @@ Both are easy to undo by accident during a dependency bump or a template sync. I
 ## TypeScript
 
 - Extends `@tada5hi/tsconfig`, overriding `target: ES2022`, `module: ESNext`, `moduleResolution: bundler`, `noEmit: true`, `allowImportingTsExtensions: true`.
-- Two configs, and the split is load-bearing: `tsconfig.json` includes `src` **and** `test` (editor + `test:types`); `tsconfig.build.json` includes `src` only and is what `tsdown` emits from. Do not "simplify" them into one — specs would start influencing the published declarations.
+- Two configs, and the split is load-bearing. `tsconfig.json` includes `src` **and** `test` — read by your editor and by `build:types`, so the specs' type-level assertions are actually evaluated. `tsconfig.build.json` includes `src` only and is what `tsdown` emits from (`tsconfig:` in `tsdown.config.ts`), so specs can never influence the published declarations. Do not "simplify" them into one: merging toward the spec-inclusive config would leak test types into `dist`, and merging toward the src-only one would silently make every `@ts-expect-error` in the suite inert.
 - `"type": "module"`, ESM-only output. No CJS build.
 - Never commit `dist/`.
 
@@ -94,17 +94,21 @@ Common types: `feat`, `fix`, `chore`, `docs`, `test`, `refactor`, `chore(deps)`.
 
 - `.github/workflows/main.yml` — install → build → (lint, test) on push/PR to `develop`, `master`, `next`, `beta`, `alpha`. Node 24.
 - `.github/workflows/release.yml` — release-please on push to `master`; on a release commit, build and publish.
-- **`test:types` is not yet a CI step.** It should be added to `main.yml`; until then, run it locally before pushing (see [testing.md](testing.md#npm-run-testtypes-is-half-the-suite) for why the runtime suite alone is not sufficient).
+- **There is no separate typecheck job, and none is needed** — `npm run build` runs `build:types` first, so every job that depends on `build` has already typechecked `src` **and** `test`. That is the only thing in CI able to see a type-level regression (see [testing.md](testing.md#the-typecheck-half-of-build-is-half-the-suite)). If you ever split `build` back into emission alone, add the typecheck somewhere else in the same change.
+
+### Publishing needs npm Trusted Publishing configured
+
+`release.yml` publishes through `tada5hi/monoship@v2`, which authenticates via OIDC (`id-token: write`) rather than a stored token. The 1.0.0 release failed with `Failed to exchange OIDC token with npm registry: 404 Not Found` and was published by hand, because npm had no trusted publisher registered for a package that did not yet exist. Now that `blemish` is on the registry, configure it once — npmjs.com → `blemish` → Settings → Trusted Publisher → GitHub Actions, repo `tada5hi/blemish`, workflow `release.yml`. Until that is done, every release fails the same way and needs a manual `npm publish`.
 
 ## Workflow
 
-Before calling any change done, run all four:
+Before calling any change done, run all three:
 
 ```bash
-npm run build && npm run test && npm run test:types && npm run lint
+npm run build && npm run test && npm run lint
 ```
 
-`npm run test` alone cannot see a type-level regression, and this package is substantially a type-level artifact.
+`build` typechecks `src` and `test` before it emits, which matters because `npm run test` alone cannot see a type-level regression and this package is substantially a type-level artifact.
 
 ## References
 

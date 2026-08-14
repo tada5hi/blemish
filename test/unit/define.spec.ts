@@ -131,7 +131,8 @@ describe('defineIssueItem typed data contract', () => {
     // The producer-side gatekeep that catches mismatched payloads at compile
     // time. The value of these cases is in the `@ts-expect-error` directives,
     // which are INERT unless a `tsc` run covers the specs — `npm run
-    // test:types` is what makes them load-bearing. Verified non-vacuous by
+    // build:types` (the first half of `npm run build`) is what makes them
+    // load-bearing. Verified non-vacuous by
     // collapsing `DefineIssueItemData`'s conditional to a permissive
     // `{ data?: any }`, which turns all three negative cases into
     // `TS2578: Unused '@ts-expect-error' directive`.
@@ -237,22 +238,29 @@ describe('defineIssueItem return type', () => {
             data: { min: 1 },
         });
 
+        // The annotations ARE the assertion — they pin the narrowed types,
+        // not just that a property access compiles. Annotate the destructuring
+        // PATTERN rather than writing `const min: number = item.data.min`:
+        // `prefer-destructuring` is error-level in the shared config, so
+        // `lint:fix` silently rewrites the latter into an unannotated
+        // destructure and the assertion quietly degrades to "reading `.min`
+        // compiles" (see testing.md).
         const notNever: IsNever<typeof item> = false;
-        const { min } = item.data;
-        const { code } = item;
+        const { min }: { min: number } = item.data;
+        const { code }: { code: 'min_length' } = item;
 
         expect([notNever, min, code]).toEqual([false, 1, 'min_length']);
     });
 
     it('resolves a bare code to a concrete bare variant', () => {
         const item = defineIssueItem({
-            path: [], 
-            message: 'x', 
-            code: IssueCode.EMAIL, 
+            path: [],
+            message: 'x',
+            code: IssueCode.EMAIL,
         });
 
         const notNever: IsNever<typeof item> = false;
-        const { code } = item;
+        const { code }: { code: 'email' } = item;
 
         expect([notNever, code]).toEqual([false, 'email']);
     });
@@ -261,7 +269,7 @@ describe('defineIssueItem return type', () => {
         const item = defineIssueItem({ path: [], message: 'x' });
 
         const notNever: IsNever<typeof item> = false;
-        const { code } = item;
+        const { code }: { code: 'value_invalid' } = item;
 
         expect([notNever, code]).toEqual([false, 'value_invalid']);
     });

@@ -21,20 +21,22 @@ import { defineIssueItem } from '../../src';
 ```bash
 npm run test            # all specs
 npm run test:coverage   # + v8 coverage report
-npm run test:types      # tsc --noEmit over src AND test  ← not covered by `npm run test`
+npm run build:types     # tsc --noEmit over src AND test  ← not covered by `npm run test`
 npm run lint
 
 npx vitest --config test/vitest.config.ts --run test/unit/prefix.spec.ts   # a single spec
 ```
 
-## `npm run test:types` is half the suite
+## The typecheck half of `build` is half the suite
 
-This package's most subtle defect to date was invisible to every runtime test, and it is the reason `tsconfig.json` includes `test/**/*`:
+`build` is split into `build:types` (`tsc --noEmit`) and `build:js` (`tsdown`), and the first half is not a formality. This package's most subtle defect to date was invisible to every runtime test, which is why `tsconfig.json` includes `test/**/*`:
 
-- `tsconfig.json` → `src` **and** `test`. Read by your editor and by `test:types`.
+- `tsconfig.json` → `src` **and** `test`. Read by your editor and by `build:types`.
 - `tsconfig.build.json` → `src` only. Read by `tsdown`, so specs can never influence the published `.d.mts`.
 
-Two categories of case depend entirely on that command:
+Putting the typecheck inside `build` rather than in a standalone command is deliberate: CI already builds before it lints and tests, so type-level regressions are caught with no dedicated job, and they cannot be skipped by anyone running only the test suite. The trade-off — a type error in a **spec** blocks the build and therefore a release — is accepted here, where the specs are cheap, few, and currently clean.
+
+Two categories of case depend entirely on that half:
 
 1. **`@ts-expect-error` directives** are inert in every automated context unless a `tsc` run covers the file. A directive above a call that no longer errors becomes `TS2578: Unused '@ts-expect-error' directive` — but only if something typechecks it.
 2. **`IsNever` assertions** in `define.spec.ts`. `never` is assignable to everything, so a return type collapsing to `never` breaks no call site and changes no runtime behaviour. Asserting `[T] extends [never] ? true : false` is `false` is the only thing that sees it. (The tuple wrapper matters — a bare `T extends never` distributes and gives the wrong answer for union returns.)
@@ -84,10 +86,12 @@ Each of these was hit while writing the current suite.
 
 **An enumeration test should assert the whole list, not membership.** `constants.spec.ts` asserts `Object.values(IssueCode)` equals the full ordered array rather than calling `toContain` 24 times: the `toContain` form cannot see an *added* code, which is precisely the drift the README's table needs to stay in sync with.
 
+**`lint:fix` can silently weaken a type-level assertion — annotate the destructuring pattern.** `prefer-destructuring` is **error-level** in `@tada5hi/eslint-config`, so `const min: number = item.data.min` is autofixed to `const { min } = item.data`. The annotation was the whole assertion; without it the line only proves that reading `.min` compiles, which `IsNever` already covers. This happened in `define.spec.ts` and was invisible in review because the fix landed before the first commit. Write it as `const { min }: { min: number } = item.data` — that satisfies the rule and keeps the type pinned. **After running `lint:fix` on a spec that asserts types, re-read the diff.**
+
 ## Writing New Tests
 
 1. Put the spec in `test/unit/<module>.spec.ts`, matching the `src` module name.
 2. Import `describe` / `it` / `expect` from `vitest` explicitly; import the units under test from `'../../src'`.
 3. Add the copyright header (see [conventions.md](conventions.md#copyright-header)).
-4. Run `npm run test`, `npm run test:types` and `npm run lint`.
+4. Run `npm run build`, `npm run test` and `npm run lint` — `build` typechecks the specs.
 5. If the case is type-level, mutate the source and confirm it fails before believing it.

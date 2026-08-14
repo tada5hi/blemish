@@ -59,7 +59,7 @@ export type DefineIssueItemData<C> = DefineIssueItemCommon & {
  * back `never`, and `never` is assignable to everything — so no call site
  * complains and consumer-side narrowing silently stops meaning anything.
  * Pinned by the type-level cases in `test/unit/define.spec.ts`, which are
- * only load-bearing because `npm run test:types` covers the specs.
+ * only load-bearing because `npm run build:types` covers the specs.
  */
 export type DefineIssueItemReturn<C, R = ResolveIssueCode<C>> = R extends ParameterizedIssueCode ?
     Extract<IssueItemTyped, { code: R }> :

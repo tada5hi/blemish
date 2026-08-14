@@ -5,7 +5,7 @@ export default defineConfig({
     format: 'esm',
     dts: true,
     sourcemap: true,
-    // `tsconfig.json` additionally includes `test/**/*` so `npm run test:types`
+    // `tsconfig.json` additionally includes `test/**/*` so `npm run build:types`
     // checks the specs — in particular the `@ts-expect-error` cases pinning
     // `defineIssueItem`'s per-code `data` gatekeep, which are inert unless a
     // `tsc` run covers them. Emission reads the src-only config so specs can

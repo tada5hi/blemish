@@ -19,7 +19,7 @@ blemish/
 ├── .agents/
 │   └── references/     # cumulative mapping to external projects (validup)
 ├── assets/logo.svg
-├── tsconfig.json       # editor + `test:types` — includes src AND test
+├── tsconfig.json       # editor + `build:types` — includes src AND test
 ├── tsconfig.build.json # emission — src only
 ├── tsdown.config.ts    # entry src/index.ts, esm, dts, tsconfig: tsconfig.build.json
 └── package.json        # NO dependencies, NO engines — both deliberate
