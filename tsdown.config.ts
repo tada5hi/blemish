@@ -2,7 +2,7 @@ import { defineConfig } from 'tsdown';
 
 export default defineConfig({
     entry: 'src/index.ts',
-    format: 'esm',
+    format: ['esm', 'cjs'],
     dts: true,
     sourcemap: true,
     // `tsconfig.json` additionally includes `test/**/*` so `npm run build:types`
