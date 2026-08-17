@@ -1,6 +1,6 @@
 {
     "name": "blemish",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "type": "module",
     "description": "A dependency-free issue tree model: nested item/group issues with absolute paths, shared across validation libraries.",
     "author": {
